@@ -199,7 +199,65 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        def min_level(gameState, level, agentIndex, alpha, beta):
+
+            actions = gameState.getLegalActions(agentIndex)
+            # No legal actions means game over
+            if len(actions) == 0:
+                return self.evaluationFunction(gameState)
+
+            v = 99999999
+            for action in actions:
+
+                # Check if it's pacmans turn to move
+                agents = gameState.getNumAgents()
+                if agentIndex == agents - 1:
+                    # If it's pacmans turn to move
+                    nextV = max_level(gameState.generateSuccessor(agentIndex, action), level, alpha, beta)
+                else:
+                    # Otherwise run minimizer for the next ghost
+                    newAgent = agentIndex + 1
+                    nextV = min_level(gameState.generateSuccessor(agentIndex, action), level, newAgent, alpha, beta)
+                
+                v = min(v, nextV)
+                if v < alpha:
+                    return v
+                beta = min(beta, v)
+            return v
+
+
+        def max_level(gameState, level, alpha, beta):
+            actions = gameState.getLegalActions(0)
+            # No legal actions or max depth has been reached means game over
+            if len(actions) == 0 or level == self.depth:
+                return self.evaluationFunction(gameState)
+
+            v = -99999999
+            
+            if level == 0:
+                act = actions[0]
+            for action in actions:
+
+                # Increase depth by 1
+                nextLevel = level + 1
+                # Run the maximizer and return the result
+                nextV = min_level(gameState.generateSuccessor(0, action), nextLevel, 1, alpha, beta)
+                if nextV > v:
+                    v = nextV
+                    if level == 0:
+                        act = action
+
+                if v > beta:
+                    return v
+                alpha = max(alpha, v)
+            if level == 0:
+                return act
+            return v
+
+
+        # Start minimax and get the action with the highest score from the minimizer
+        return max_level(gameState, 0, -99999999, 99999999)
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
