@@ -75,7 +75,21 @@ class ReflexAgent(Agent):
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
         "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+
+        score = successorGameState.getScore()
+
+        foodList = newFood.asList()
+
+        minFoodDis = 999999
+        for food in foodList:
+            minFoodDis = min(minFoodDis, manhattanDistance(newPos, food))
+        
+        newGhostPos = successorGameState.getGhostPositions()
+        for ghost in newGhostPos:
+            if (manhattanDistance(newPos, ghost) < 2):
+                return -999999
+
+        return score + 1/minFoodDis
 
 def scoreEvaluationFunction(currentGameState: GameState):
     """
@@ -136,7 +150,44 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        def min_action(action):
+            return min_level(gameState.generateSuccessor(0, action), 1, 1)
+
+        def min_level(gameState, level, agentIndex):
+
+            actions = gameState.getLegalActions(agentIndex)
+            # No legal actions means game over
+            if len(actions) == 0:
+                return self.evaluationFunction(gameState)
+
+            # Check if it's pacmans turn to move
+            agents = gameState.getNumAgents()
+            if agentIndex == agents - 1:
+                # If it's pacmans turn to move
+                successors = [max_level(gameState.generateSuccessor(agentIndex, action), level) for action in actions]
+                return min(successors)
+            else:
+                # Otherwise run minimizer for the next ghost
+                newAgent = agentIndex + 1
+                successors = [min_level(gameState.generateSuccessor(agentIndex, action), level, newAgent) for action in actions]
+                return min(successors)
+
+
+        def max_level(gameState, level):
+            actions = gameState.getLegalActions(0)
+            # No legal actions or max depth has been reached means game over
+            if len(actions) == 0 or level == self.depth:
+                return self.evaluationFunction(gameState)
+
+            # Increase depth by 1
+            nextLevel = level + 1
+            # Run the maximizer and return the result
+            successors = [min_level(gameState.generateSuccessor(0, action), nextLevel, 1) for action in actions]
+            return max(successors)
+
+        # Start minimax and get the action with the highest score from the minimizer
+        return max(gameState.getLegalActions(0), key=min_action)
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
