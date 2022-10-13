@@ -77,18 +77,15 @@ class ReflexAgent(Agent):
         "*** YOUR CODE HERE ***"
 
         score = successorGameState.getScore()
-
         foodList = newFood.asList()
 
+        # Find the closest food
         minFoodDis = 999999
         for food in foodList:
             minFoodDis = min(minFoodDis, manhattanDistance(newPos, food))
-        
-        newGhostPos = successorGameState.getGhostPositions()
-        for ghost in newGhostPos:
-            if (manhattanDistance(newPos, ghost) < 2):
-                return -999999
 
+        # Modify the score to return original score + reciprocal of the closest food distance
+        # Added the reciprocal because the smaller the distance to food the greater the reward
         return score + 1/minFoodDis
 
 def scoreEvaluationFunction(currentGameState: GameState):
@@ -220,6 +217,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
                     newAgent = agentIndex + 1
                     nextV = min_level(gameState.generateSuccessor(agentIndex, action), level, newAgent, alpha, beta)
                 
+                # alpha beta implementation
                 v = min(v, nextV)
                 if v < alpha:
                     return v
@@ -235,28 +233,27 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
 
             v = -99999999
             
-            if level == 0:
-                act = actions[0]
             for action in actions:
 
                 # Increase depth by 1
                 nextLevel = level + 1
                 # Run the maximizer and return the result
                 nextV = min_level(gameState.generateSuccessor(0, action), nextLevel, 1, alpha, beta)
-                if nextV > v:
-                    v = nextV
-                    if level == 0:
-                        act = action
 
+                # alpha beta implementation
+                v = max(v, nextV)
                 if v > beta:
                     return v
                 alpha = max(alpha, v)
+                
+                # For initial depth
+                if level == 0 and v == nextV:
+                    act = action
             if level == 0:
                 return act
             return v
 
-
-        # Start minimax and get the action with the highest score from the minimizer
+        # Start minimax
         return max_level(gameState, 0, -99999999, 99999999)
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
@@ -320,15 +317,18 @@ def betterEvaluationFunction(currentGameState: GameState):
     DESCRIPTION: <write something here so we know what you did>
     """
     "*** YOUR CODE HERE ***"
-    foodlist = currentGameState.getFood().asList()
+    foodList = currentGameState.getFood().asList()
+    score = currentGameState.getScore()
+    newPos = currentGameState.getPacmanPosition()
 
-    # Get closest distance to food else return the default score if no food
-    if len(foodlist) > 0:
-        foodDis = min([manhattanDistance(currentGameState.getPacmanPosition(), food) for food in foodlist])
-    else:
-        return currentGameState.getScore()
-    
-    return 1 / (foodDis + 1) + currentGameState.getScore()
+    # Find the closest food
+    minFoodDis = 999999
+    for food in foodList:
+        minFoodDis = min(minFoodDis, manhattanDistance(newPos, food))
+
+    # Modify the score to return original score + reciprocal of the closest food distance
+    # Added the reciprocal because the smaller the distance to food the greater the reward
+    return score + 1/minFoodDis
 
 # Abbreviation
 better = betterEvaluationFunction
