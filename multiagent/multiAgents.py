@@ -272,7 +272,45 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         legal moves.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        def min_action(action):
+            return exp_level(gameState.generateSuccessor(0, action), 1, 1)
+
+        def exp_level(gameState, level, agentIndex):
+
+            actions = gameState.getLegalActions(agentIndex)
+            # No legal actions means game over
+            if len(actions) == 0:
+                return self.evaluationFunction(gameState)
+
+            # Uniform prob for all legal actions
+            prob = 1/len(actions)
+            # Check if it's pacmans turn to move
+            agents = gameState.getNumAgents()
+            if agentIndex == agents - 1:
+                # If it's pacmans turn to move
+                successors = sum([max_level(gameState.generateSuccessor(agentIndex, action), level) * prob for action in actions])
+            else:
+                # Otherwise run minimizer for the next ghost
+                newAgent = agentIndex + 1
+                successors = sum([exp_level(gameState.generateSuccessor(agentIndex, action), level, newAgent) * prob for action in actions])
+            return successors
+
+
+        def max_level(gameState, level):
+            actions = gameState.getLegalActions(0)
+            # No legal actions or max depth has been reached means game over
+            if len(actions) == 0 or level == self.depth:
+                return self.evaluationFunction(gameState)
+
+            # Increase depth by 1
+            nextLevel = level + 1
+            # Run the maximizer and return the result
+            successors = [exp_level(gameState.generateSuccessor(0, action), nextLevel, 1) for action in actions]
+            return max(successors)
+
+        # Start minimax and get the action with the highest score from the minimizer
+        return max(gameState.getLegalActions(0), key=min_action)
 
 def betterEvaluationFunction(currentGameState: GameState):
     """
